@@ -26,6 +26,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
     
     body {
@@ -35,12 +36,13 @@
       padding: 20px;
       color: #334155;
       line-height: 1.6;
+      touch-action: manipulation;
     }
     
     h2 {
       text-align: center;
       margin-bottom: 25px;
-      font-size: 32px;
+      font-size: clamp(24px, 5vw, 32px);
       background: var(--gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -84,6 +86,8 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       min-height: 44px;
       transition: all 0.2s ease;
+      -webkit-appearance: none;
+      appearance: none;
     }
     
     select:focus, input:focus {
@@ -107,11 +111,12 @@
       justify-content: center;
       gap: 8px;
       border: none;
+      user-select: none;
     }
     
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-hover);
+    button:active {
+      transform: translateY(0);
+      box-shadow: var(--shadow);
     }
     
     .primary-btn {
@@ -176,7 +181,7 @@
     }
     
     .stat-card div {
-      font-size: 28px;
+      font-size: clamp(20px, 4vw, 28px);
       font-weight: bold;
       color: var(--primary-color);
     }
@@ -223,6 +228,7 @@
       font-size: 14px;
       height: 40px;
       position: relative;
+      touch-action: manipulation;
     }
     
     th {
@@ -245,9 +251,11 @@
       min-width: 180px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       padding: 0 15px;
       height: 40px;
+      user-select: none;
+      text-align: center;
     }
     
     .room-name:hover {
@@ -257,16 +265,27 @@
     .room-info {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
+      justify-content: center;
       font-size: 12px;
       font-weight: normal;
       color: #64748b;
+      width: 100%;
     }
     
     .cell {
       cursor: pointer;
       transition: background 0.2s;
       min-width: 40px;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    
+    .cell:active {
+      background: #e0f2fe !important;
     }
     
     .cell:hover {
@@ -277,36 +296,37 @@
       color: #fff;
       font-weight: bold;
       border-radius: 6px;
+      cursor: pointer !important;
     }
     
-    .occupied.confirmed {
+    .occupied.paid-fully {
       background: var(--success-color);
     }
     
-    .occupied.pending {
+    .occupied.paid-partial {
       background: var(--warning-color);
     }
     
-    .occupied.cancelled {
+    .occupied.not-paid {
       background: var(--danger-color);
     }
     
-    .occupied.deposit {
-      background: var(--info-color);
+    .occupied.cancelled {
+      background: #94a3b8;
     }
     
     .occupied.maintenance {
       background: #94a3b8;
     }
     
-    .occupied.cleaning {
-      background: #8b5cf6;
-    }
-    
     .occupied span {
       display: block;
       font-size: 11px;
       line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
     }
     
     .room-color-0 { color: #dc2626; }
@@ -329,6 +349,7 @@
       align-items: center;
       z-index: 10;
       padding: 15px;
+      backdrop-filter: blur(3px);
     }
     
     .modal-content {
@@ -352,24 +373,25 @@
       font-size: 24px;
       cursor: pointer;
       color: #64748b;
-      width: 30px;
-      height: 30px;
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 50%;
+      padding: 0;
     }
     
     .modal-close:hover {
       background: #f1f5f9;
       color: #334155;
-      transform: none;
     }
     
     .modal-content h3 {
       margin-top: 0;
       color: var(--primary-color);
       padding-right: 30px;
+      font-size: clamp(18px, 4vw, 22px);
     }
     
     .modal-content input, .modal-content select {
@@ -490,6 +512,25 @@
       border-radius: 50%;
     }
     
+    .payment-status {
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+    }
+    
+    .room-number {
+      font-size: clamp(12px, 3vw, 14px);
+      font-weight: bold;
+      text-align: center;
+      width: 100%;
+      padding: 0 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
     /* Мобильная адаптация */
     @media (max-width: 768px) {
       body {
@@ -497,7 +538,6 @@
       }
       
       h2 {
-        font-size: 24px;
         margin-bottom: 15px;
       }
       
@@ -505,6 +545,7 @@
         flex-direction: column;
         align-items: stretch;
         padding: 15px;
+        gap: 10px;
       }
       
       .controls label, .filters label {
@@ -513,58 +554,174 @@
       
       select, button, input {
         width: 100%;
-        margin: 5px 0;
+        margin: 0;
+        font-size: 16px;
+        padding: 10px 12px;
+        min-height: 44px;
+      }
+      
+      button {
+        min-height: 44px;
+        padding: 10px 12px;
       }
       
       .stats {
         flex-direction: column;
+        gap: 10px;
       }
       
       .stat-card {
         width: 100%;
         max-width: 100%;
+        padding: 15px;
       }
       
       .modal-content {
         padding: 20px;
         margin: 10px;
+        max-height: 85vh;
       }
       
       .modal-buttons {
         flex-direction: column;
+        gap: 10px;
       }
       
       .modal-content button {
         width: 100%;
+        margin-top: 5px;
+        padding: 12px;
+        min-height: 44px;
       }
       
-      th, td {
-        padding: 5px;
-        font-size: 13px;
+      .modal-close {
+        width: 40px;
+        height: 40px;
+        top: 10px;
+        right: 10px;
       }
       
-      .occupied span {
-        font-size: 10px;
-      }
-      
-      .financial-inputs {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    @media (max-width: 480px) {
       th, td {
         padding: 4px;
         font-size: 12px;
         height: 35px;
+        min-width: 35px;
+      }
+      
+      .occupied span {
+        font-size: 9px;
+      }
+      
+      .financial-inputs {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      
+      .backup-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .backup-controls button {
+        width: 100%;
       }
       
       .room-name {
         min-width: 120px;
+        padding: 0 8px;
+      }
+      
+      .room-number {
+        font-size: 11px;
+      }
+      
+      .payment-status {
+        font-size: 8px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .calendar-container {
+        margin-left: -10px;
+        margin-right: -10px;
+        width: calc(100% + 20px);
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+      }
+      
+      th, td {
+        padding: 3px;
+        font-size: 11px;
+        height: 32px;
+        min-width: 32px;
+      }
+      
+      .room-name {
+        min-width: 100px;
+        padding: 0 5px;
       }
       
       .cell {
-        min-width: 35px;
+        min-width: 32px;
+      }
+      
+      .modal-content {
+        padding: 15px;
+      }
+      
+      .stat-card h3 {
+        font-size: 12px;
+      }
+      
+      .stat-card div {
+        font-size: 18px;
+      }
+    }
+    
+    @media (max-width: 360px) {
+      th, td {
+        padding: 2px;
+        font-size: 10px;
+        height: 30px;
+        min-width: 30px;
+      }
+      
+      .room-name {
+        min-width: 90px;
+        font-size: 10px;
+      }
+      
+      .cell {
+        min-width: 30px;
+      }
+    }
+    
+    /* Таблетки */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .container {
+        padding: 0 10px;
+      }
+      
+      .controls, .filters {
+        padding: 15px;
+        gap: 12px;
+      }
+      
+      select, button, input {
+        padding: 10px 12px;
+        font-size: 15px;
+      }
+      
+      th, td {
+        padding: 6px;
+        font-size: 13px;
+        height: 38px;
+      }
+      
+      .room-name {
+        min-width: 150px;
+        padding: 0 10px;
       }
     }
   </style>
@@ -639,7 +796,7 @@
   <div class="calendar-container">
     <table id="calendarTable">
       <thead><tr><th class="room-name">Квартира</th></tr></thead>
-      <tbody></tbody>
+      <tbody id="calendarBody"></tbody>
     </table>
   </div>
 </div>
@@ -649,13 +806,31 @@
   <div class="modal-content">
     <button class="modal-close" onclick="closeBookingModal()">×</button>
     <h3>Бронирование</h3>
-    <input id="guestName" placeholder="Имя арендатора">
+    <input id="guestName" placeholder="Имя клиента">
     <input id="guestPhone" placeholder="Телефон">
-    <input id="priceTotal" type="number" placeholder="Сумма всего">
-    <input id="pricePaid" type="number" placeholder="Оплачено">
+    <input id="nightsCount" type="number" placeholder="Количество ночей" min="1">
+    <input id="totalPrice" type="number" placeholder="Общая сумма (₽)">
+    <input id="paidAmount" type="number" placeholder="Оплачено (₽)">
 
     <div id="remainingAmount" style="margin-top:5px;font-weight:bold;color:#1e40af;">
       Осталось: 0
+    </div>
+
+    <div style="margin: 10px 0; padding: 10px; background: #f8fafc; border-radius: 8px;">
+      <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <div style="width: 20px; height: 20px; background: var(--danger-color); border-radius: 4px;"></div>
+          <span style="font-size: 12px;">Не оплачено</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <div style="width: 20px; height: 20px; background: var(--warning-color); border-radius: 4px;"></div>
+          <span style="font-size: 12px;">Частично</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <div style="width: 20px; height: 20px; background: var(--success-color); border-radius: 4px;"></div>
+          <span style="font-size: 12px;">Полностью</span>
+        </div>
+      </div>
     </div>
 
     <select id="bookingStatus">
@@ -669,8 +844,9 @@
     <input id="dateFrom" type="date">
     <input id="dateTo" type="date">
     
-    <label>
-      <input type="checkbox" id="repeatBooking" onchange="toggleRepeatOptions()"> Повторять бронирование
+    <label style="display: flex; align-items: center; gap: 8px; margin: 10px 0;">
+      <input type="checkbox" id="repeatBooking" onchange="toggleRepeatOptions()">
+      <span>Повторять бронирование</span>
     </label>
     
     <div class="repeat-options" id="repeatOptions">
@@ -750,7 +926,7 @@
 let rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
 if (rooms.length === 0) {
   rooms = Array.from({ length: 15 }, (_, i) => ({
-    name: `🌇 Апартаменты №${101 + i}`,
+    name: `Апартаменты №${101 + i}`,
     category: i < 10 ? 'standard' : (i < 13 ? 'luxury' : 'family'),
     price: i < 10 ? 2500 : (i < 13 ? 5000 : 3500),
     capacity: i < 10 ? 2 : (i < 13 ? 4 : 6),
@@ -766,6 +942,7 @@ if (rooms.length === 0) {
 const monthSel = document.getElementById('monthSelect');
 const yearSel = document.getElementById('yearSelect');
 const table = document.getElementById('calendarTable');
+const calendarBody = document.getElementById('calendarBody');
 const bookingModal = document.getElementById('bookingModal');
 const renameModal = document.getElementById('renameModal');
 const financialModal = document.getElementById('financialModal');
@@ -806,58 +983,70 @@ function drawCalendar(m = activeMonth, y = activeYear) {
   activeMonth = +m;
   activeYear = +y;
   const days = new Date(y, activeMonth + 1, 0).getDate();
-  const head = table.tHead.rows[0];
-  head.innerHTML = '<th class="room-name">Квартира</th>';
+  
+  // Очищаем заголовок и создаем заново
+  const thead = table.querySelector('thead');
+  thead.innerHTML = '<tr><th class="room-name">Квартира</th></tr>';
+  
+  // Добавляем дни в заголовок
   for (let d = 1; d <= days; d++) {
     const th = document.createElement('th');
     th.textContent = d.toString().padStart(2, '0');
-    head.append(th);
+    thead.querySelector('tr').appendChild(th);
   }
 
-  const body = table.tBodies[0];
-  body.innerHTML = '';
-  rooms.forEach((r, i) => {
+  // Очищаем тело таблицы
+  calendarBody.innerHTML = '';
+  
+  // Создаем строки для каждой квартиры
+  for (let i = 0; i < rooms.length; i++) {
+    const room = rooms[i];
     const tr = document.createElement('tr');
-    const td = document.createElement('td');
     
-    // Создаем содержимое ячейки с названием комнаты и информацией
+    // Ячейка с названием квартиры
+    const nameTd = document.createElement('td');
+    nameTd.className = `room-name room-color-${i % 7}`;
+    
     const roomInfoDiv = document.createElement('div');
     roomInfoDiv.className = 'room-info';
     
     const roomNameSpan = document.createElement('span');
-    roomNameSpan.textContent = typeof r === 'object' ? r.name : r;
-    roomNameSpan.style.fontWeight = 'bold';
-    roomNameSpan.style.fontSize = '14px';
-    
-    const roomPriceSpan = document.createElement('span');
-    roomPriceSpan.textContent = `Цена: ${r.price}₽/ночь`;
-    roomPriceSpan.style.fontSize = '11px';
+    roomNameSpan.className = 'room-number';
+    roomNameSpan.textContent = room.name;
     
     roomInfoDiv.appendChild(roomNameSpan);
-    roomInfoDiv.appendChild(roomPriceSpan);
     
     // Добавляем индикатор уборки
-    if (r.needsCleaning) {
+    if (room.needsCleaning) {
       const cleaningIndicator = document.createElement('div');
       cleaningIndicator.className = 'cleaning-indicator';
       roomInfoDiv.appendChild(cleaningIndicator);
     }
     
-    td.appendChild(roomInfoDiv);
-    td.className = `room-name room-color-${i % 7}`;
-    td.onclick = () => showRoomFinancialInfo(i);
-    tr.append(td);
+    nameTd.appendChild(roomInfoDiv);
+    nameTd.onclick = () => showRoomFinancialInfo(i);
+    tr.appendChild(nameTd);
     
+    // Создаем ячейки для дней
     for (let d = 1; d <= days; d++) {
-      const c = document.createElement('td');
-      c.className = 'cell';
-      c.dataset.room = i;
-      c.dataset.day = d;
-      c.onclick = () => openBookingModal(c);
-      tr.append(c);
+      const cell = document.createElement('td');
+      cell.className = 'cell';
+      cell.dataset.room = i;
+      cell.dataset.day = d;
+      cell.dataset.month = activeMonth;
+      cell.dataset.year = activeYear;
+      
+      // ПРОСТОЙ обработчик клика
+      cell.onclick = function() {
+        console.log('Клик по ячейке', this.dataset);
+        openBookingModal(this);
+      };
+      
+      tr.appendChild(cell);
     }
-    body.append(tr);
-  });
+    
+    calendarBody.appendChild(tr);
+  }
 
   paintBookings();
   calculateStats();
@@ -894,7 +1083,7 @@ function openRenameModal() {
   rooms.forEach((room, index) => {
     const option = document.createElement('option');
     option.value = index;
-    option.textContent = typeof room === 'object' ? room.name : room;
+    option.textContent = room.name;
     roomSelect.appendChild(option);
   });
   
@@ -914,23 +1103,7 @@ function renameSelectedRoom() {
     return;
   }
   
-  if (typeof rooms[roomIndex] === 'object') {
-    rooms[roomIndex].name = newName;
-  } else {
-    rooms[roomIndex] = {
-      name: newName,
-      category: 'standard',
-      price: 2500,
-      capacity: 2,
-      amenities: ['wifi', 'tv'],
-      purchasePrice: 0,
-      targetProfit: 0,
-      totalEarned: 0,
-      monthEarned: 0,
-      needsCleaning: false
-    };
-  }
-  
+  rooms[roomIndex].name = newName;
   localStorage.setItem('rooms', JSON.stringify(rooms));
   drawCalendar();
   closeRenameModal();
@@ -974,29 +1147,89 @@ function saveRoomFinancialInfo() {
 }
 
 function paintBookings() {
-  document.querySelectorAll('td.cell').forEach(c => { 
-    c.className = 'cell'; 
-    c.textContent = ''; 
-    c.innerHTML = '';
-    c.setAttribute('draggable', 'false');
+  console.log('Отрисовка бронирований');
+  
+  // Сбрасываем все ячейки
+  const cells = document.querySelectorAll('#calendarBody td.cell');
+  cells.forEach(cell => {
+    // ВАЖНО: Сохраняем оригинальные классы и данные
+    const room = cell.dataset.room;
+    const day = cell.dataset.day;
+    const month = cell.dataset.month;
+    const year = cell.dataset.year;
+    
+    cell.className = 'cell';
+    cell.innerHTML = '';
+    cell.setAttribute('draggable', 'false');
+    
+    // Восстанавливаем данные
+    cell.dataset.room = room;
+    cell.dataset.day = day;
+    cell.dataset.month = month;
+    cell.dataset.year = year;
+    
+    // ВАЖНО: Просто устанавливаем обработчик заново
+    cell.onclick = function() {
+      console.log('Клик по ячейке (в paintBookings)', this.dataset);
+      openBookingModal(this);
+    };
   });
   
-  // Обновляем общий заработок для каждой квартиры
-  rooms.forEach((room, index) => {
+  // Обнуляем заработок для всех квартир
+  rooms.forEach(room => {
     room.totalEarned = 0;
     room.monthEarned = 0;
   });
   
+  // Отрисовываем бронирования
   bookings
     .filter(b => b.month == activeMonth && b.year == activeYear)
     .forEach(b => {
       b.days.forEach(d => {
-        const row = table.tBodies[0].rows[b.room];
+        // Ищем все ячейки с нужным днем в нужной строке
+        const row = calendarBody.rows[b.room];
         if (!row) return;
-        const cell = row.querySelector(`td[data-day="${d}"]`);
+        
+        // Ищем ячейку в строке по data-day
+        const cell = row.querySelector(`td.cell[data-day="${d}"]`);
         if (!cell) return;
-        cell.classList.add('occupied', b.status || 'confirmed');
-        cell.innerHTML = `<span>${b.name}</span><span>${b.phone}</span>`;
+        
+        // Определяем цвет по статусу оплаты
+        let paymentClass = 'not-paid';
+        if (b.paid === b.total && b.total > 0) {
+          paymentClass = 'paid-fully';
+        } else if (b.paid > 0 && b.paid < b.total) {
+          paymentClass = 'paid-partial';
+        }
+        
+        // Для отмененных и техобслуживания используем отдельные классы
+        if (b.status === 'cancelled' || b.status === 'maintenance') {
+          paymentClass = b.status;
+        }
+        
+        cell.className = 'cell occupied ' + paymentClass;
+        
+        // Добавляем информацию в ячейку
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = b.name.length > 8 ? b.name.substring(0, 8) + '...' : b.name;
+        
+        const paymentSpan = document.createElement('span');
+        paymentSpan.className = 'payment-status';
+        
+        if (b.status === 'cancelled') {
+          paymentSpan.textContent = 'ОТМЕНА';
+        } else if (b.status === 'maintenance') {
+          paymentSpan.textContent = 'ТЕХ.';
+        } else if (b.paid === b.total) {
+          paymentSpan.textContent = 'ОПЛАЧЕНО';
+        } else if (b.paid > 0) {
+          paymentSpan.textContent = `ОПЛ. ${b.paid}/${b.total}`;
+        } else {
+          paymentSpan.textContent = 'НЕ ОПЛ';
+        }
+        
+        cell.appendChild(nameSpan);
+        cell.appendChild(paymentSpan);
         cell.setAttribute('draggable', 'true');
         
         // Добавляем доход к общей сумме для этой квартиры
@@ -1013,17 +1246,65 @@ function paintBookings() {
 }
 
 function openBookingModal(cell) {
-  activeCell = cell;
-  const r = +cell.dataset.room, d = +cell.dataset.day;
-  const exist = bookings.find(b => b.room === r && b.month == activeMonth && b.year == activeYear && b.days.includes(d));
+  console.log('openBookingModal вызван с ячейкой:', cell);
   
-  document.getElementById('guestName').value = exist?.name || '';
-  document.getElementById('guestPhone').value = exist?.phone || '';
-  document.getElementById('priceTotal').value = exist?.total || '';
-  document.getElementById('pricePaid').value = exist?.paid || '';
-  document.getElementById('bookingStatus').value = exist?.status || 'confirmed';
-  document.getElementById('dateFrom').value = exist?.from || '';
-  document.getElementById('dateTo').value = exist?.to || '';
+  if (!cell) {
+    console.error('Ячейка не передана в openBookingModal');
+    return;
+  }
+  
+  activeCell = cell;
+  const r = +cell.dataset.room;
+  const d = +cell.dataset.day;
+  const m = +cell.dataset.month;
+  const y = +cell.dataset.year;
+  
+  // Находим существующее бронирование для этой ячейки
+  const exist = bookings.find(b => 
+    b.room === r && 
+    b.month == m && 
+    b.year == y && 
+    b.days.includes(d)
+  );
+  
+  if (exist) {
+    console.log('Найдено существующее бронирование:', exist);
+    // Заполняем форму данными существующего бронирования
+    document.getElementById('guestName').value = exist.name || '';
+    document.getElementById('guestPhone').value = exist.phone || '';
+    document.getElementById('nightsCount').value = exist.nights || '';
+    document.getElementById('totalPrice').value = exist.total || '';
+    document.getElementById('paidAmount').value = exist.paid || '';
+    document.getElementById('bookingStatus').value = exist.status || 'confirmed';
+    document.getElementById('dateFrom').value = exist.from || '';
+    document.getElementById('dateTo').value = exist.to || '';
+    
+    // Рассчитываем количество ночей из дат, если не указано
+    if (!exist.nights && exist.from && exist.to) {
+      const fromDate = new Date(exist.from);
+      const toDate = new Date(exist.to);
+      const nights = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
+      document.getElementById('nightsCount').value = nights;
+    }
+  } else {
+    console.log('Новое бронирование');
+    // Очищаем форму для нового бронирования
+    document.getElementById('guestName').value = '';
+    document.getElementById('guestPhone').value = '';
+    document.getElementById('nightsCount').value = '';
+    document.getElementById('totalPrice').value = '';
+    document.getElementById('paidAmount').value = '';
+    document.getElementById('bookingStatus').value = 'confirmed';
+    
+    // Устанавливаем даты на основе выбранного дня
+    const fromDate = new Date(y, m, d);
+    const toDate = new Date(y, m, d);
+    toDate.setDate(toDate.getDate() + 1);
+    
+    document.getElementById('dateFrom').value = fromDate.toISOString().split('T')[0];
+    document.getElementById('dateTo').value = toDate.toISOString().split('T')[0];
+    document.getElementById('nightsCount').value = '1';
+  }
   
   // Сброс повторяющихся опций
   document.getElementById('repeatBooking').checked = false;
@@ -1038,11 +1319,21 @@ function closeBookingModal() {
 }
 
 function saveBooking() {
+  if (!activeCell) {
+    alert('Ячейка не выбрана');
+    return;
+  }
+  
   const room = +activeCell.dataset.room;
+  const day = +activeCell.dataset.day;
+  const month = +activeCell.dataset.month;
+  const year = +activeCell.dataset.year;
+  
   const name = document.getElementById('guestName').value.trim();
   const phone = document.getElementById('guestPhone').value.trim();
-  const total = +document.getElementById('priceTotal').value;
-  const paid = +document.getElementById('pricePaid').value;
+  const nights = +document.getElementById('nightsCount').value || 1;
+  const total = +document.getElementById('totalPrice').value || 0;
+  const paid = +document.getElementById('paidAmount').value || 0;
   const status = document.getElementById('bookingStatus').value;
   const from = document.getElementById('dateFrom').value;
   const to = document.getElementById('dateTo').value;
@@ -1050,8 +1341,8 @@ function saveBooking() {
   const repeatType = document.getElementById('repeatType').value;
   const repeatCount = +document.getElementById('repeatCount').value;
   
-  if (!name || !phone || !from || !to || !total) {
-    alert('Заполните все обязательные поля');
+  if (!name || !phone || !from || !to) {
+    alert('Заполните все обязательные поля: имя, телефон, даты');
     return;
   }
   
@@ -1061,15 +1352,43 @@ function saveBooking() {
     return;
   }
   
+  // Рассчитываем количество ночей если не указано
+  const calculatedNights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+  
+  // Генерируем массив дней между датами
   const days = [];
-  for (let d = d1.getDate(); d <= d2.getDate(); d++) days.push(d);
+  const currentDate = new Date(d1);
+  while (currentDate <= d2) {
+    days.push(currentDate.getDate());
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  // Получаем месяц и год из даты заезда
+  const bookingMonth = d1.getMonth();
+  const bookingYear = d1.getFullYear();
+  
+  console.log('Сохранение бронирования:', {
+    room, bookingMonth, bookingYear, name, days
+  });
+  
+  // Удаляем существующие бронирования для этих дней
+  bookings = bookings.filter(b => {
+    // Если это то же самое бронирование (по номеру комнаты, месяцу, году и пересекающимся дням)
+    if (b.room === room && b.month == bookingMonth && b.year == bookingYear) {
+      // Проверяем пересечение дней
+      const hasOverlap = b.days.some(bDay => days.includes(bDay));
+      return !hasOverlap;
+    }
+    return true;
+  });
   
   const baseBooking = { 
     room, 
-    year: activeYear, 
-    month: activeMonth, 
+    year: bookingYear, 
+    month: bookingMonth, 
     name, 
     phone, 
+    nights: calculatedNights,
     total, 
     paid, 
     status,
@@ -1078,12 +1397,11 @@ function saveBooking() {
     days 
   };
   
+  console.log('Создано бронирование:', baseBooking);
+  
   if (repeat) {
     saveRecurringBooking(baseBooking, repeatType, repeatCount);
   } else {
-    // Удаляем существующие
-    // Удаляем существующие бронирования для этих дней
-    bookings = bookings.filter(b => !(b.room === room && b.month == activeMonth && b.year == activeYear && b.days.some(x => days.includes(x))));
     bookings.push(baseBooking);
   }
   
@@ -1121,16 +1439,21 @@ function saveRecurringBooking(baseBooking, repeatType, repeatCount) {
     
     // Пересчитать дни для нового месяца
     const days = [];
-    for (let d = fromDate.getDate(); d <= toDate.getDate(); d++) days.push(d);
+    const currentDate = new Date(fromDate);
+    const endDate = new Date(toDate);
+    while (currentDate <= endDate) {
+      days.push(currentDate.getDate());
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
     newBooking.days = days;
     
     // Удалить существующие брони для этих дней
-    bookings = bookings.filter(b => !(
-      b.room === newBooking.room && 
-      b.month == newBooking.month && 
-      b.year == newBooking.year && 
-      b.days.some(x => days.includes(x))
-    ));
+    bookings = bookings.filter(b => {
+      if (b.room === newBooking.room && b.month == newBooking.month && b.year == newBooking.year) {
+        return !b.days.some(day => days.includes(day));
+      }
+      return true;
+    });
     
     bookingsToSave.push(newBooking);
   }
@@ -1142,16 +1465,35 @@ function saveRecurringBooking(baseBooking, repeatType, repeatCount) {
 
 function deleteBooking() {
   if (!activeCell) return;
+  
   const room = +activeCell.dataset.room;
   const day = +activeCell.dataset.day;
+  const month = +activeCell.dataset.month;
+  const year = +activeCell.dataset.year;
   
-  bookings = bookings.filter(b => !(b.room === room && b.month == activeMonth && b.year == activeYear && b.days.includes(day)));
-  localStorage.setItem('bookings', JSON.stringify(bookings));
-  createBackup(); // Авто-бэкап
-  closeBookingModal();
-  paintBookings();
-  calculateStats();
-  showNotification('Бронирование удалено');
+  console.log('Удаление бронирования:', {room, day, month, year});
+  
+  // Находим бронирование для этой ячейки
+  const bookingIndex = bookings.findIndex(b => {
+    const isSameRoom = b.room === room;
+    const isSameMonth = b.month == month;
+    const isSameYear = b.year == year;
+    const includesDay = b.days.includes(day);
+    
+    return isSameRoom && isSameMonth && isSameYear && includesDay;
+  });
+  
+  if (bookingIndex !== -1) {
+    bookings.splice(bookingIndex, 1);
+    localStorage.setItem('bookings', JSON.stringify(bookings));
+    createBackup(); // Авто-бэкап
+    closeBookingModal();
+    paintBookings();
+    calculateStats();
+    showNotification('Бронирование удалено');
+  } else {
+    alert('Бронирование не найдено');
+  }
 }
 
 // Функция для отметки уборки
@@ -1163,8 +1505,8 @@ function markCleaningNeeded() {
   const endingBookings = bookings.filter(b => {
     const toDate = new Date(b.to);
     return toDate.getDate() === todayDay && 
-           toDate.getMonth() === activeMonth && 
-           toDate.getFullYear() === activeYear;
+           toDate.getMonth() === today.getMonth() && 
+           toDate.getFullYear() === today.getFullYear();
   });
   
   if (endingBookings.length === 0) {
@@ -1174,7 +1516,9 @@ function markCleaningNeeded() {
   
   // Помечаем квартиры как требующие уборки
   endingBookings.forEach(booking => {
-    rooms[booking.room].needsCleaning = true;
+    if (rooms[booking.room]) {
+      rooms[booking.room].needsCleaning = true;
+    }
   });
   
   localStorage.setItem('rooms', JSON.stringify(rooms));
@@ -1197,13 +1541,15 @@ function checkCleaningNeeded() {
   const endingBookings = bookings.filter(b => {
     const toDate = new Date(b.to);
     return toDate.getDate() === todayDay && 
-           toDate.getMonth() === activeMonth && 
-           toDate.getFullYear() === activeYear;
+           toDate.getMonth() === today.getMonth() && 
+           toDate.getFullYear() === today.getFullYear();
   });
   
   // Помечаем квартиры как требующие уборки
   endingBookings.forEach(booking => {
-    rooms[booking.room].needsCleaning = true;
+    if (rooms[booking.room]) {
+      rooms[booking.room].needsCleaning = true;
+    }
   });
   
   localStorage.setItem('rooms', JSON.stringify(rooms));
@@ -1215,10 +1561,12 @@ function filterRooms() {
   const status = document.getElementById('statusFilter').value;
   const category = document.getElementById('categoryFilter').value;
   
-  document.querySelectorAll('tbody tr').forEach((row, i) => {
+  document.querySelectorAll('#calendarBody tr').forEach((row, i) => {
     const room = rooms[i];
-    const roomName = (typeof room === 'object' ? room.name : room).toLowerCase();
-    const roomCategory = typeof room === 'object' ? room.category : 'standard';
+    if (!room) return;
+    
+    const roomName = room.name.toLowerCase();
+    const roomCategory = room.category;
     const hasBooking = row.querySelector('.occupied');
     const needsCleaning = room.needsCleaning;
     
@@ -1235,19 +1583,23 @@ function filterRooms() {
 
 // Статистика
 function calculateStats() {
-  const totalDays = rooms.length * new Date(activeYear, activeMonth + 1, 0).getDate();
+  const daysInMonth = new Date(activeYear, activeMonth + 1, 0).getDate();
+  const totalDays = rooms.length * daysInMonth;
   let bookedDays = 0;
   let expectedIncome = 0;
-  let totalBookings = new Set();
+  let totalBookingsSet = new Set();
   let cleaningCount = 0;
   
-  bookings
-    .filter(b => b.month == activeMonth && b.year == activeYear)
-    .forEach(b => {
-      bookedDays += b.days.length;
-      expectedIncome += b.total;
-      totalBookings.add(`${b.room}-${b.name}-${b.from}`);
-    });
+  // Считаем только бронирования текущего месяца
+  const currentMonthBookings = bookings.filter(b => 
+    b.month == activeMonth && b.year == activeYear
+  );
+  
+  currentMonthBookings.forEach(b => {
+    bookedDays += b.days.length;
+    expectedIncome += b.total;
+    totalBookingsSet.add(`${b.room}-${b.name}-${b.from}`);
+  });
   
   // Считаем квартиры, требующие уборки
   cleaningCount = rooms.filter(room => room.needsCleaning).length;
@@ -1255,7 +1607,7 @@ function calculateStats() {
   const occupancyRate = totalDays > 0 ? ((bookedDays / totalDays) * 100).toFixed(1) : 0;
   document.getElementById('occupancyRate').textContent = `${occupancyRate}%`;
   document.getElementById('expectedIncome').textContent = `${expectedIncome} ₽`;
-  document.getElementById('totalBookings').textContent = totalBookings.size;
+  document.getElementById('totalBookings').textContent = totalBookingsSet.size;
   document.getElementById('cleaningCount').textContent = cleaningCount;
 }
 
@@ -1302,7 +1654,9 @@ function initDragAndDrop() {
       if (cell.classList.contains('occupied')) {
         e.dataTransfer.setData('text/plain', JSON.stringify({
           room: cell.dataset.room,
-          day: cell.dataset.day
+          day: cell.dataset.day,
+          month: cell.dataset.month,
+          year: cell.dataset.year
         }));
       }
     });
@@ -1315,38 +1669,54 @@ function initDragAndDrop() {
       e.preventDefault();
       const data = JSON.parse(e.dataTransfer.getData('text/plain'));
       if (data) {
-        moveBooking(data.room, data.day, cell.dataset.room, cell.dataset.day);
+        moveBooking(data.room, data.day, data.month, data.year, 
+                   cell.dataset.room, cell.dataset.day, cell.dataset.month, cell.dataset.year);
       }
     });
   });
 }
 
-function moveBooking(fromRoom, fromDay, toRoom, toDay) {
+function moveBooking(fromRoom, fromDay, fromMonth, fromYear, toRoom, toDay, toMonth, toYear) {
   fromRoom = +fromRoom;
   fromDay = +fromDay;
+  fromMonth = +fromMonth;
+  fromYear = +fromYear;
   toRoom = +toRoom;
   toDay = +toDay;
+  toMonth = +toMonth;
+  toYear = +toYear;
   
   // Найти бронирование
-  const booking = bookings.find(b => 
-    b.room === fromRoom && b.month == activeMonth && 
-    b.year == activeYear && b.days.includes(fromDay)
+  const bookingIndex = bookings.findIndex(b => 
+    b.room === fromRoom && b.month == fromMonth && 
+    b.year == fromYear && b.days.includes(fromDay)
   );
   
-  if (booking) {
+  if (bookingIndex !== -1) {
+    const booking = bookings[bookingIndex];
+    
     // Вычислить смещение дней
     const dayDiff = toDay - fromDay;
-    const roomDiff = toRoom - fromRoom;
+    const monthDiff = toMonth - fromMonth;
+    const yearDiff = toYear - fromYear;
     
     // Обновить бронирование
     booking.days = booking.days.map(d => d + dayDiff);
     booking.room = toRoom;
+    booking.month = toMonth;
+    booking.year = toYear;
     
     // Обновить даты
     const fromDate = new Date(booking.from);
     const toDate = new Date(booking.to);
     fromDate.setDate(fromDate.getDate() + dayDiff);
+    fromDate.setMonth(fromDate.getMonth() + monthDiff);
+    fromDate.setFullYear(fromDate.getFullYear() + yearDiff);
+    
     toDate.setDate(toDate.getDate() + dayDiff);
+    toDate.setMonth(toDate.getMonth() + monthDiff);
+    toDate.setFullYear(toDate.getFullYear() + yearDiff);
+    
     booking.from = fromDate.toISOString().split('T')[0];
     booking.to = toDate.toISOString().split('T')[0];
     
@@ -1417,7 +1787,7 @@ function exportToCSV() {
   let csv = 'Квартира,День,Месяц,Год,Имя,Телефон,Статус,Оплачено,Всего,Дата заезда,Дата выезда\n';
   bookings.forEach(b => {
     b.days.forEach(d => {
-      const roomName = typeof rooms[b.room] === 'object' ? rooms[b.room].name : rooms[b.room];
+      const roomName = rooms[b.room]?.name || 'Неизвестно';
       csv += `${roomName},${d},${+b.month + 1},${b.year},${b.name},${b.phone},${b.status},${b.paid},${b.total},${b.from},${b.to}\n`;
     });
   });
@@ -1432,7 +1802,7 @@ function exportToGoogleCalendar() {
     const end = new Date(b.year, b.month, b.days[b.days.length - 1]);
     end.setDate(end.getDate() + 1);
     
-    const roomName = typeof rooms[b.room] === 'object' ? rooms[b.room].name : rooms[b.room];
+    const roomName = rooms[b.room]?.name || 'Неизвестно';
     
     return {
       title: `Бронь: ${roomName} - ${b.name}`,
@@ -1483,15 +1853,15 @@ function toggleRepeatOptions() {
 }
 
 // Обновление остатка суммы
-const totalInput = document.getElementById('priceTotal');
-const paidInput = document.getElementById('pricePaid');
+const totalInput = document.getElementById('totalPrice');
+const paidInput = document.getElementById('paidAmount');
 const remainingDiv = document.getElementById('remainingAmount');
 
 function updateRemaining() {
   const total = Number(totalInput.value) || 0;
   const paid = Number(paidInput.value) || 0;
   const remaining = total - paid;
-  remainingDiv.textContent = 'Осталось: ' + remaining;
+  remainingDiv.textContent = 'Осталось: ' + remaining + ' ₽';
   
   if (remaining > 0) {
     remainingDiv.style.color = '#ef4444';
@@ -1518,6 +1888,5 @@ document.addEventListener('DOMContentLoaded', () => {
   checkCleaningNeeded();
 });
 </script>
-
 </body>
 </html>
