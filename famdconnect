@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DOROS SuperApp</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src='https://meet.jit.si/external_api.js'></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f1419; /* Twitter Dark */
+            --sidebar-bg: #000000;
+            --card-bg: #1e2732;
+            --primary: #1d9bf0;
+            --text-main: #e7e9ea;
+            --text-sec: #71767b;
+            --border: #2f3336;
+            --danger: #f4212e;
+            --success: #00ba7c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg-color); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
+
+        /* --- AUTH SCREEN --- */
+        #auth-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999;
+            display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        }
+        .auth-box {
+            background: var(--bg-color); padding: 40px; border-radius: 20px; border: 1px solid var(--border);
+            width: 100%; max-width: 400px; text-align: center;
+        }
+        .auth-input {
+            width: 100%; padding: 15px; margin: 10px 0; background: var(--card-bg);
+            border: 1px solid var(--border); border-radius: 8px; color: white; outline: none;
+        }
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 25px;
+            font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; font-size: 16px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #1a8cd8; }
+        .btn-sec { background: transparent; color: var(--primary); border: 1px solid var(--border); }
+
+        /* --- LAYOUT --- */
+        .sidebar {
+            width: 80px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 100;
+        }
+        .nav-item {
+            width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 24px; color: var(--text-main); cursor: pointer;
+            margin-bottom: 20px; transition: 0.2s;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(29, 155, 240, 0.1); color: var(--primary); }
+        
+        .main-container { flex: 1; position: relative; overflow: hidden; }
+        .page { display: none; height: 100%; width: 100%; position: absolute; top: 0; left: 0; overflow-y: auto; }
+        .page.active { display: block; }
+
+        /* --- FEED MODULE --- */
+        .feed-header {
+            padding: 15px; border-bottom: 1px solid var(--border); background: rgba(15, 20, 25, 0.85);
+            backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between;
+        }
+        .create-post-box { padding: 20px; border-bottom: 1px solid var(--border); display: flex; gap: 15px; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--border); }
+        .post-input {
+            flex: 1; background: transparent; border: none; color: white; font-size: 18px; resize: none; outline: none;
+        }
+        .media-preview { max-width: 100%; border-radius: 12px; margin-top: 10px; display: none; }
+        .feed-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .icon-btn { color: var(--primary); cursor: pointer; font-size: 20px; padding: 8px; border-radius: 50%; }
+        .icon-btn:hover { background: rgba(29, 155, 240, 0.1); }
+        
+        .post-card { padding: 15px; border-bottom: 1px solid var(--border); transition: 0.2s; }
+        .post-card:hover { background: rgba(255,255,255,0.02); }
+        .post-content { margin: 10px 0; white-space: pre-wrap; }
+        .post-media { width: 100%; border-radius: 12px; border: 1px solid var(--border); max-height: 500px; object-fit: cover; }
+        .post-stats { display: flex; gap: 20px; color: var(--text-sec); margin-top: 10px; font-size: 14px; }
+        .stat-item { cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .stat-item:hover { color: var(--primary); }
+        .liked { color: var(--danger); }
+
+        /* --- CHAT MODULE --- */
+        .chat-layout { display: flex; height: 100%; }
+        .chat-list { width: 300px; border-right: 1px solid var(--border); overflow-y: auto; background: var(--bg-color); }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: #000; }
+        .chat-item { padding: 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .chat-item:hover { background: var(--card-bg); }
+        .messages-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 70%; padding: 10px 15px; border-radius: 20px; font-size: 15px; word-wrap: break-word; }
+        .msg-me { background: var(--primary); align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg-other { background: var(--card-bg); align-self: flex-start; border-bottom-left-radius: 2px; }
+        .chat-input-area { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+
+        /* --- MAP MODULE --- */
+        #map-container { height: 100%; width: 100%; }
+        .map-overlay { position: absolute; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+        .glass-panel { background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); padding: 15px; border-radius: 12px; color: white; border: 1px solid var(--border); }
+
+        /* --- CALL MODULE --- */
+        .call-container { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #meet-frame { width: 100%; height: 100%; }
+        .call-controls { padding: 20px; text-align: center; }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            body { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: 60px; flex-direction: row; justify-content: space-around; border-top: 1px solid var(--border); border-right: none; padding: 0; }
+            .nav-item { margin: 0; }
+            .chat-list { display: none; width: 100%; }
+            .chat-list.mobile-show { display: block; }
+            .chat-area.mobile-hide { display: none; }
+        }
+        
+        /* Utils */
+        .hidden { display: none !important; }
+        .loading-spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="auth-overlay">
+        <div class="auth-box">
+            <h1 style="color: var(--primary); margin-bottom: 20px;"><i class="fas fa-cube"></i> DOROS</h1>
+            <div id="login-form">
+                <h2>Вход</h2>
+                <input type="email" id="email" class="auth-input" placeholder="Email">
+                <input type="password" id="password" class="auth-input" placeholder="Пароль">
+                <button class="btn btn-primary" onclick="app.login()">Войти</button>
+                <button class="btn btn-sec" onclick="document.getElementById('login-form').classList.add('hidden'); document.getElementById('reg-form').classList.remove('hidden')">Нет аккаунта? Регистрация</button>
+            </div>
+            <div id="reg-form" class="hidden">
+                <h2>Регистрация</h2>
+                <input type="text" id="reg-name" class="auth-input" placeholder="Имя пользователя">
+                <input type="email" id="reg-email" class="auth-input" placeholder="Email">
+                <input type="password" id="reg-password" class="auth-input" placeholder="Пароль (мин. 6 символов)">
+                <button class="btn btn-primary" onclick="app.register()">Создать аккаунт</button>
+                <button class="btn btn-sec" onclick="document.getElementById('reg-form').classList.add('hidden'); document.getElementById('login-form').classList.remove('hidden')">Назад ко входу</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="sidebar">
+        <div class="nav-item active" onclick="app.nav('feed')" title="Лента"><i class="fas fa-home"></i></div>
+        <div class="nav-item" onclick="app.nav('chat')" title="Чат"><i class="fas fa-comment-alt"></i></div>
+        <div class="nav-item" onclick="app.nav('map')" title="Карта"><i class="fas fa-map-marked-alt"></i></div>
+        <div class="nav-item" onclick="app.nav('calls')" title="Звонки"><i class="fas fa-video"></i></div>
+        <div style="flex: 1;"></div>
+        <div class="nav-item" onclick="app.logout()" title="Выход"><i class="fas fa-sign-out-alt"></i></div>
+    </nav>
+
+    <main class="main-container">
+        
+        <div id="page-feed" class="page active">
+            <div class="feed-header">
+                <h2>Главная</h2>
+                <div style="font-size: 14px; color: var(--text-sec);" id="user-welcome"></div>
+            </div>
+            
+            <div class="create-post-box">
+                <img src="https://via.placeholder.com/48" id="current-user-avatar" class="avatar">
+                <div style="flex: 1;">
+                    <textarea id="post-text" class="post-input" rows="2" placeholder="Что нового?"></textarea>
+                    <img id="upload-preview" class="media-preview">
+                    <div class="feed-actions">
+                        <div>
+                            <label class="icon-btn" title="Загрузить фото/видео">
+                                <i class="fas fa-image"></i>
+                                <input type="file" id="media-upload" accept="image/*,video/*" hidden onchange="app.handleFileSelect(this)">
+                            </label>
+                        </div>
+                        <button class="btn btn-primary" style="width: auto; padding: 8px 20px;" onclick="app.createPost()">Опубликовать</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="feed-container">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+
+        <div id="page-chat" class="page">
+            <div class="chat-layout">
+                <div class="chat-list" id="chat-list-panel">
+                    <div style="padding: 15px; border-bottom: 1px solid var(--border);">
+                        <h3>Сообщения</h3>
+                        <input type="text" placeholder="Поиск пользователей..." class="auth-input" style="padding: 8px; margin-top: 10px;" oninput="app.searchUsers(this.value)">
+                    </div>
+                    <div id="users-list"></div>
+                </div>
+                <div class="chat-area" id="chat-view">
+                    <div id="chat-placeholder" style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-sec);">
+                        Выберите чат для начала общения
+                    </div>
+                    <div id="active-chat" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
+                        <div style="padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px;">
+                            <button class="icon-btn" onclick="app.toggleMobileChat()" style="color: white;"><i class="fas fa-arrow-left"></i></button>
+                            <h3 id="chat-header-name">User</h3>
+                        </div>
+                        <div id="messages-container" class="messages-box"></div>
+                        <div class="chat-input-area">
+                            <input type="text" id="msg-input" class="auth-input" style="margin: 0;" placeholder="Написать сообщение..." onkeypress="if(event.key === 'Enter') app.sendMessage()">
+                            <button class="icon-btn" onclick="app.sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-map" class="page">
+            <div id="map-container"></div>
+            <div class="map-overlay">
+                <div class="glass-panel">
+                    <h3><i class="fas fa-user-friends"></i> Друзья рядом</h3>
+                    <p style="font-size: 12px; color: #ccc;">Ваша геолокация активна</p>
+                </div>
+                <button class="btn btn-primary" onclick="app.centerMap()"><i class="fas fa-crosshair"></i> Я</button>
+            </div>
+        </div>
+
+        <div id="page-calls" class="page">
+            <div class="call-container">
+                <div class="call-controls" id="call-setup">
+                    <h2 style="margin-bottom: 20px;">Видеозвонки</h2>
+                    <input type="text" id="room-name" class="auth-input" placeholder="Название комнаты (напр. meeting1)" style="max-width: 300px;">
+                    <button class="btn btn-primary" style="max-width: 300px;" onclick="app.startCall()">Начать звонок</button>
+                    <p style="margin-top: 20px; color: var(--text-sec);">Защищено сквозным шифрованием (Jitsi)</p>
+                </div>
+                <div id="meet-frame" class="hidden"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        // Using credentials from famdconnect.html as requested
+        const firebaseConfig = {
+            apiKey: "AIzaSyDt04qUBk6fXq58NE9zoA5Q3yWWpk_KK8s",
+            authDomain: "famdshop-2196c.firebaseapp.com",
+            databaseURL: "https://famdshop-2196c-default-rtdb.firebaseio.com",
+            projectId: "famdshop-2196c",
+            storageBucket: "famdshop-2196c.firebasestorage.app",
+            messagingSenderId: "75598057700",
+            appId: "1:75598057700:web:7274d018a585e599381cf1"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const rtdb = firebase.database();
+        const storage = firebase.storage();
+
+        class SuperApp {
+            constructor() {
+                this.currentUser = null;
+                this.map = null;
+                this.mapMarker = null;
+                this.jitsiApi = null;
+                this.activeChatId = null;
+                this.fileToUpload = null;
+                this.setupAuthListener();
+            }
+
+            // --- AUTHENTICATION ---
+            setupAuthListener() {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        this.currentUser = user;
+                        document.getElementById('auth-overlay').style.display = 'none';
+                        document.getElementById('user-welcome').innerText = `@${user.displayName || 'user'}`;
+                        document.getElementById('current-user-avatar').src = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random`;
+                        
+                        // Update status in Realtime DB
+                        rtdb.ref(`status/${user.uid}`).set({ state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP });
+                        rtdb.ref(`status/${user.uid}`).onDisconnect().set({ state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP });
+
+                        // Ensure user exists in Firestore
+                        db.collection('users').doc(user.uid).set({
+                            uid: user.uid,
+                            name: user.displayName,
+                            email: user.email,
+                            avatar: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=random`,
+                            lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+
+                        this.loadFeed();
+                        this.initChatList();
+                        this.initMap();
+                    } else {
+                        document.getElementById('auth-overlay').style.display = 'flex';
+                    }
+                });
+            }
+
+            async login() {
+                const email = document.getElementById('email').value;
+                const pass = document.getElementById('password').value;
+                try {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                } catch (e) { alert("Ошибка: " + e.message); }
+            }
+
+            async register() {
+                const name = document.getElementById('reg-name').value;
+                const email = document.getElementById('reg-email').value;
+                const pass = document.getElementById('reg-password').value;
+                try {
+                    const res = await auth.createUserWithEmailAndPassword(email, pass);
+                    await res.user.updateProfile({ displayName: name });
+                    // Reload to apply name
+                    window.location.reload();
+                } catch (e) { alert("Ошибка: " + e.message); }
+            }
+
+            logout() { auth.signOut(); }
+
+            // --- NAVIGATION ---
+            nav(pageId) {
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-' + pageId).classList.add('active');
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                event.currentTarget.classList.add('active');
+
+                if (pageId === 'map' && this.map) setTimeout(() => this.map.invalidateSize(), 300);
+            }
+
+            // --- FEED & POSTS ---
+            handleFileSelect(input) {
+                const file = input.files[0];
+                if (file) {
+                    this.fileToUpload = file;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.getElementById('upload-preview');
+                        img.src = e.target.result;
+                        img.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            async createPost() {
+                const text = document.getElementById('post-text').value;
+                if (!text && !this.fileToUpload) return;
+
+                const btn = document.querySelector('.create-post-box .btn');
+                btn.disabled = true;
+                btn.innerText = 'Загрузка...';
+
+                let mediaUrl = null;
+                let mediaType = null;
+
+                try {
+                    // Upload to Firebase Storage (Replacment for Cloudinary)
+                    if (this.fileToUpload) {
+                        const ref = storage.ref(`posts/${this.currentUser.uid}/${Date.now()}_${this.fileToUpload.name}`);
+                        const snapshot = await ref.put(this.fileToUpload);
+                        mediaUrl = await snapshot.ref.getDownloadURL();
+                        mediaType = this.fileToUpload.type.startsWith('video') ? 'video' : 'image';
+                    }
+
+                    await db.collection('posts').add({
+                        text: text,
+                        mediaUrl: mediaUrl,
+                        mediaType: mediaType,
+                        userId: this.currentUser.uid,
+                        userName: this.currentUser.displayName,
+                        userAvatar: this.currentUser.photoURL,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        likes: []
+                    });
+
+                    // Reset form
+                    document.getElementById('post-text').value = '';
+                    document.getElementById('upload-preview').style.display = 'none';
+                    this.fileToUpload = null;
+                } catch (e) {
+                    console.error(e);
+                    alert('Ошибка публикации: ' + e.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = 'Опубликовать';
+                }
+            }
+
+            loadFeed() {
+                db.collection('posts').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
+                    const container = document.getElementById('feed-container');
+                    container.innerHTML = '';
+                    snap.forEach(doc => {
+                        const post = doc.data();
+                        const isLiked = post.likes && post.likes.includes(this.currentUser.uid);
+                        
+                        let mediaHtml = '';
+                        if (post.mediaUrl) {
+                            if (post.mediaType === 'video') {
+                                mediaHtml = `<video src="${post.mediaUrl}" controls class="post-media"></video>`;
+                            } else {
+                                mediaHtml = `<img src="${post.mediaUrl}" class="post-media" loading="lazy">`;
+                            }
+                        }
+
+                        const el = document.createElement('div');
+                        el.className = 'post-card';
+                        el.innerHTML = `
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <img src="${post.userAvatar || 'https://via.placeholder.com/40'}" class="avatar" style="width:40px;height:40px;">
+                                <div>
+                                    <b>${post.userName}</b>
+                                    <div style="font-size:12px; color:var(--text-sec);">${post.createdAt ? new Date(post.createdAt.toDate()).toLocaleDateString() : 'Just now'}</div>
+                                </div>
+                            </div>
+                            <div class="post-content">${post.text || ''}</div>
+                            ${mediaHtml}
+                            <div class="post-stats">
+                                <div class="stat-item ${isLiked ? 'liked' : ''}" onclick="app.toggleLike('${doc.id}', ${!isLiked})">
+                                    <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i> ${post.likes ? post.likes.length : 0}
+                                </div>
+                                <div class="stat-item"><i class="far fa-comment"></i> Коммент.</div>
+                                <div class="stat-item"><i class="fas fa-share"></i> Поделиться</div>
+                            </div>
+                        `;
+                        container.appendChild(el);
+                    });
+                });
+            }
+
+            async toggleLike(postId, doLike) {
+                const ref = db.collection('posts').doc(postId);
+                if (doLike) {
+                    await ref.update({ likes: firebase.firestore.FieldValue.arrayUnion(this.currentUser.uid) });
+                } else {
+                    await ref.update({ likes: firebase.firestore.FieldValue.arrayRemove(this.currentUser.uid) });
+                }
+            }
+
+            // --- CHAT SYSTEM ---
+            initChatList() {
+                // Listen to all users for demo purposes (In real app, friends only)
+                db.collection('users').limit(20).onSnapshot(snap => {
+                    const list = document.getElementById('users-list');
+                    list.innerHTML = '';
+                    snap.forEach(doc => {
+                        const user = doc.data();
+                        if (user.uid === this.currentUser.uid) return;
+                        
+                        const el = document.createElement('div');
+                        el.className = 'chat-item';
+                        el.onclick = () => this.openChat(user);
+                        el.innerHTML = `
+                            <img src="${user.avatar}" class="avatar" style="width:40px;height:40px;">
+                            <div>
+                                <b>${user.name}</b>
+                                <div style="font-size:12px; color:var(--text-sec);">Нажмите, чтобы написать</div>
+                            </div>
+                        `;
+                        list.appendChild(el);
+                    });
+                });
+            }
+
+            searchUsers(query) {
+                // Client-side filtering for simplicity in this demo
+                const items = document.querySelectorAll('.chat-item');
+                items.forEach(item => {
+                    const name = item.querySelector('b').innerText.toLowerCase();
+                    item.style.display = name.includes(query.toLowerCase()) ? 'flex' : 'none';
+                });
+            }
+
+            openChat(user) {
+                this.activeChatId = [this.currentUser.uid, user.uid].sort().join('_');
+                
+                // UI Toggle
+                document.getElementById('chat-placeholder').classList.add('hidden');
+                document.getElementById('active-chat').classList.remove('hidden');
+                document.getElementById('chat-header-name').innerText = user.name;
+                
+                // Mobile handling
+                if(window.innerWidth <= 768) {
+                    document.getElementById('chat-list-panel').classList.remove('mobile-show');
+                    document.getElementById('chat-list-panel').style.display = 'none';
+                    document.getElementById('chat-view').style.display = 'flex';
+                }
+
+                // Load messages (Realtime DB)
+                const container = document.getElementById('messages-container');
+                container.innerHTML = '';
+                rtdb.ref(`chats/${this.activeChatId}`).limitToLast(50).on('child_added', snap => {
+                    const msg = snap.val();
+                    const div = document.createElement('div');
+                    div.className = `message ${msg.sender === this.currentUser.uid ? 'msg-me' : 'msg-other'}`;
+                    div.innerText = msg.text;
+                    container.appendChild(div);
+                    container.scrollTop = container.scrollHeight;
+                });
+            }
+
+            sendMessage() {
+                const input = document.getElementById('msg-input');
+                const text = input.value.trim();
+                if (!text || !this.activeChatId) return;
+                
+                rtdb.ref(`chats/${this.activeChatId}`).push({
+                    text: text,
+                    sender: this.currentUser.uid,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                input.value = '';
+            }
+
+            toggleMobileChat() {
+                document.getElementById('chat-list-panel').style.display = 'block';
+                document.getElementById('chat-view').style.display = 'none';
+            }
+
+            // --- MAP SYSTEM ---
+            initMap() {
+                if (this.map) return;
+                
+                this.map = L.map('map-container').setView([0, 0], 2);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19
+                }).addTo(this.map);
+
+                // Track own location
+                if (navigator.geolocation) {
+                    navigator.geolocation.watchPosition(pos => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        
+                        // Update DB
+                        db.collection('users').doc(this.currentUser.uid).update({
+                            location: { lat, lng }
+                        });
+
+                        // Move my marker
+                        if (!this.mapMarker) {
+                            const icon = L.divIcon({
+                                className: 'custom-icon',
+                                html: `<div style="width:15px;height:15px;background:var(--primary);border-radius:50%;border:2px solid white;box-shadow:0 0 10px var(--primary);"></div>`
+                            });
+                            this.mapMarker = L.marker([lat, lng], {icon}).addTo(this.map);
+                            this.map.setView([lat, lng], 14);
+                        } else {
+                            this.mapMarker.setLatLng([lat, lng]);
+                        }
+                    });
+                }
+
+                // Show others
+                db.collection('users').onSnapshot(snap => {
+                    // Clear existing (simple implementation)
+                    this.map.eachLayer(layer => {
+                        if (layer instanceof L.Marker && layer !== this.mapMarker) {
+                            this.map.removeLayer(layer);
+                        }
+                    });
+
+                    snap.forEach(doc => {
+                        const u = doc.data();
+                        if (u.uid === this.currentUser.uid || !u.location) return;
+                        
+                        const icon = L.divIcon({
+                            className: 'friend-icon',
+                            html: `<img src="${u.avatar}" style="width:30px;height:30px;border-radius:50%;border:2px solid white;">`
+                        });
+                        L.marker([u.location.lat, u.location.lng], {icon})
+                         .bindPopup(u.name)
+                         .addTo(this.map);
+                    });
+                });
+            }
+
+            centerMap() {
+                if(this.mapMarker) this.map.flyTo(this.mapMarker.getLatLng(), 15);
+            }
+
+            // --- CALL SYSTEM ---
+            startCall() {
+                const roomName = document.getElementById('room-name').value.replace(/[^a-zA-Z0-9]/g, '') || 'room-' + Math.random().toString(36).substr(2,9);
+                const domain = 'meet.guifi.net'; // Using the server from call.html
+                const options = {
+                    roomName: roomName,
+                    width: '100%',
+                    height: '100%',
+                    parentNode: document.querySelector('#meet-frame'),
+                    userInfo: { displayName: this.currentUser.displayName },
+                    configOverwrite: { startWithAudioMuted: true, startWithVideoMuted: true }
+                };
+                
+                document.getElementById('call-setup').classList.add('hidden');
+                document.getElementById('meet-frame').classList.remove('hidden');
+                
+                this.jitsiApi = new JitsiMeetExternalAPI(domain, options);
+                this.jitsiApi.addEventListeners({
+                    videoConferenceLeft: () => {
+                        this.jitsiApi.dispose();
+                        document.getElementById('call-setup').classList.remove('hidden');
+                        document.getElementById('meet-frame').classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        const app = new SuperApp();
+    </script>
+</body>
+</html>
